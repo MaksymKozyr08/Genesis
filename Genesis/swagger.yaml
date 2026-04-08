@@ -1,0 +1,76 @@
+openapi: 3.0.0
+info:
+  title: GitHub Repository Release Notifier API
+  description: API for managing subscriptions to GitHub repository releases.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Default local server
+
+paths:
+  /subscribe:
+    post:
+      summary: Subscribe to repository releases
+      description: Creates a new subscription for a given email and repository. The repository must exist on GitHub.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+      responses:
+        '201':
+          description: Subscription successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          description: Bad request (invalid payload or repository format)
+        '404':
+          description: Repository not found on GitHub
+        '409':
+          description: Conflict (subscription already exists for this email and repository)
+        '500':
+          description: Internal server error
+
+  /subscribe/{id}:
+    delete:
+      summary: Unsubscribe from repository releases
+      description: Deletes an existing subscription using its UUID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the subscription to delete
+      responses:
+        '204':
+          description: Subscription successfully deleted (No Content)
+        '400':
+          description: Missing subscription ID
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    SubscribeRequest:
+      type: object
+      required:
+        - email
+        - repository
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        repository:
+          type: string
+          example: golang/go
+          description: Must be in the format 'owner/repo'
